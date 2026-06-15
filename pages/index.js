@@ -389,9 +389,12 @@ function reducer(state, action) {
       const COLS=4,SPACEX=230,SPACEY=220,STARTX=60,STARTY=60;
       let col=0,row=0;
       let tableNum=tables.length+1;
-      const place=()=>{const x=STARTX+col*SPACEX,y=STARTY+row*SPACEY;col++;if(col>=COLS){col=0;row++;}return{x,y};};
-
-      function addTablesForGuests(guestList,groupId,baseName){
+      const place=()=>{
+        const x=STARTX+col*SPACEX,y=STARTY+row*SPACEY;
+        col++; if(col>=COLS){col=0;row++;} return{x,y};
+      };
+      // Use arrow function (not declaration) to avoid illegal function-in-block
+      const addTables=(guestList,groupId,baseName)=>{
         const total=guestList.length;
         if(total===0)return;
         const numTables=Math.ceil(total/perTable);
@@ -402,8 +405,7 @@ function reducer(state, action) {
           newTables.push({id:genId(),name:label,type:"round",seats:thisSeats,x,y,groupId,w:null,h:null,rotation:0});
           tableNum++;
         }
-      }
-
+      };
       if(mode==="size"){
         const tableCount=Math.max(1,action.tableCount||1);
         for(let i=0;i<tableCount;i++){
@@ -411,21 +413,17 @@ function reducer(state, action) {
           newTables.push({id:genId(),name:`Table ${tableNum++}`,type:"round",seats:perTable,x,y,groupId:null,w:null,h:null,rotation:0});
         }
       } else {
-        // Group mode: split each group across multiple tables if needed
         groups.forEach(g=>{
           const members=guests.filter(gs=>gs.groupId===g.id);
-          addTablesForGuests(members,g.id,g.name);
+          addTables(members,g.id,g.name);
         });
-        // Ungrouped guests
         const ung=guests.filter(g=>!g.groupId);
-        addTablesForGuests(ung,null,`Table ${tableNum}`);
+        if(ung.length>0) addTables(ung,null,`Table ${tableNum}`);
       }
-
-      // Plausibility check: warn if mismatch (non-blocking, just log)
       const totalSeatsCreated=newTables.reduce((s,t)=>s+(t.seats||0),0);
       const guestsToSeat=mode==="size"?0:guests.length;
       if(mode!=="size"&&totalSeatsCreated!==guestsToSeat){
-        console.warn(`SeatFlow: created ${totalSeatsCreated} seats for ${guestsToSeat} guests`);
+        console.warn(`SeatFlow: ${totalSeatsCreated} seats for ${guestsToSeat} guests`);
       }
       return withHistory(state,{tables:[...tables,...newTables]});
     }
@@ -1215,7 +1213,11 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
   const [marqueeStart,setMarqueeStart]=useState(null);
   const [multiDragStart,setMultiDragStart]=useState(null); // {cx,cy, snaps:{id:{x,y}}}
   const overPopupRef=useRef(false);
-  const lastPinchDist=useRef(null); // tracks if mouse is over expanded popup
+  const lastPinchDist=useRef(null);
+  const longPressTimer=useRef(null);
+  const touchDragTable=useRef(null);   // {id, origX, origY, startCX, startCY}
+  const touchMoveMode=useRef(null);    // tableId currently in move mode
+  const [activeTouchMove,setActiveTouchMove]=useState(null); // tableId for toolbar move btn
   const [pan,setPan]=useState({x:80,y:60});
   const [zoom,setZoom]=useState(1);
   const [panning,setPanning]=useState(false);
@@ -1326,34 +1328,31 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
     if(e.touches.length===1){
       const t=e.touches[0];
       lastPinchDist.current=null;
-      // Don't start panning immediately — wait to see if it's a long-press on a table
-      setPanStart({x:t.clientX-pan.x,y:t.clientY-pan.y});
-      // Long-press timer: after 350ms activate table drag mode
-      longPressTimer.current=setTimeout(()=>{
-        // Check if we are over a table element
-        const el=document.elementFromPoint(t.clientX,t.clientY);
-        const tableEl=el?.closest("[data-tableid]");
-        if(tableEl){
-          const tid=tableEl.getAttribute("data-tableid");
-          const tb=tables.find(t2=>t2.id===tid);
-          if(tb){
-            const r=containerRef.current.getBoundingClientRect();
-            const cx=(t.clientX-r.left-pan.x)/zoom;
-            const cy2=(t.clientY-r.top-pan.y)/zoom;
-            touchDragTable.current={id:tid,origX:tb.x,origY:tb.y,startCX:cx,startCY:cy2};
-            setPanning(false);
-            // Haptic feedback if available
-            if(navigator.vibrate) navigator.vibrate(30);
-          }
-        } else {
-          setPanning(true);
+      // If toolbar "Move" button is active for a table, handle drag
+      if(touchMoveMode.current){
+        const r=containerRef.current.getBoundingClientRect();
+        const tb=tables.find(t2=>t2.id===touchMoveMode.current);
+        if(tb){
+          touchDragTable.current={
+            id:touchMoveMode.current,
+            origX:tb.x, origY:tb.y,
+            startCX:(t.clientX-r.left-pan.x)/zoom,
+            startCY:(t.clientY-r.top-pan.y)/zoom,
+          };
         }
-      },350);
+        return;
+      }
+      // Normal: start pan (canvas moves with finger)
+      setPanning(true);
+      setPanStart({x:t.clientX-pan.x, y:t.clientY-pan.y});
     } else if(e.touches.length===2){
       clearTimeout(longPressTimer.current);
       touchDragTable.current=null;
       setPanning(false);
-      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const d=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY
+      );
       lastPinchDist.current=d;
     }
   }
@@ -1361,7 +1360,6 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
     e.preventDefault();
     if(e.touches.length===1){
       const t=e.touches[0];
-      // If long-press table drag is active
       if(touchDragTable.current){
         const r=containerRef.current.getBoundingClientRect();
         const cx=(t.clientX-r.left-pan.x)/zoom;
@@ -1370,20 +1368,18 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
         const dy=cy2-touchDragTable.current.startCY;
         dispatch({type:"UPDATE_TABLE",id:touchDragTable.current.id,payload:{
           x:Math.max(0,touchDragTable.current.origX+dx),
-          y:Math.max(0,touchDragTable.current.origY+dy)
+          y:Math.max(0,touchDragTable.current.origY+dy),
         }});
         return;
       }
-      // Cancel long-press if finger moved significantly before timer fires
-      if(longPressTimer.current&&panStart){
-        const moved=Math.hypot(t.clientX-(panStart.x+pan.x),t.clientY-(panStart.y+pan.y));
-        if(moved>8){clearTimeout(longPressTimer.current);setPanning(true);}
-      }
       if(panning&&panStart){
-        setPan({x:t.clientX-panStart.x,y:t.clientY-panStart.y});
+        setPan({x:t.clientX-panStart.x, y:t.clientY-panStart.y});
       }
     } else if(e.touches.length===2){
-      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const d=Math.hypot(
+        e.touches[0].clientX-e.touches[1].clientX,
+        e.touches[0].clientY-e.touches[1].clientY
+      );
       if(lastPinchDist.current){
         const ratio=d/lastPinchDist.current;
         setZoom(z=>Math.min(4,Math.max(0.2,z*ratio)));
@@ -1396,8 +1392,23 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
     if(touchDragTable.current){
       dispatch({type:"UPDATE_TABLE_HISTORY",id:touchDragTable.current.id,payload:{}});
       touchDragTable.current=null;
+      // Keep move mode active so user can drag again
     }
-    setPanning(false);setPanStart(null);lastPinchDist.current=null;
+    setPanning(false);
+    setPanStart(null);
+    lastPinchDist.current=null;
+  }
+  // Called from toolbar "Move" button
+  function startTouchMove(tableId){
+    if(touchMoveMode.current===tableId){
+      // Toggle off
+      touchMoveMode.current=null;
+      setActiveTouchMove(null);
+    } else {
+      touchMoveMode.current=tableId;
+      setActiveTouchMove(tableId);
+      if(navigator.vibrate) navigator.vibrate(20);
+    }
   }
 
   // Background pattern CSS
@@ -1495,6 +1506,8 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
             onSelectTable={tid=>{setSelectedTable(prev=>prev===tid?null:tid);}}
             onTableClick={()=>handleTableClick(table.id)}
             isMobile={isMobile}
+            activeTouchMove={activeTouchMove}
+            onStartTouchMove={()=>startTouchMove(table.id)}
             onStartDrag={e=>startTableDrag(e,table.id)}
             onStartResize={e=>startResize(e,table.id)}
             onPopupEnter={()=>{overPopupRef.current=true;}}
@@ -1524,7 +1537,7 @@ function tableDefaultSize(type){
 // ─── TABLE ELEMENT ─────────────────────────────────────────────────────────
 // ─── TABLE ELEMENT ─────────────────────────────────────────────────────────
 // selectedTable: the currently "active" table id (shows toolbar)
-function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dragGuest,hoveredSeat,setHoveredSeat,handleSeatDrop,handleSeatClick,selectedSeat,selectedTable,onSelectTable,dispatch,isExpanded,isHighlighted,isMultiSelected,highlightedGuest,isMobile,onTableClick,onStartDrag,onStartResize,onPopupEnter,onPopupLeave }) {
+function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dragGuest,hoveredSeat,setHoveredSeat,handleSeatDrop,handleSeatClick,selectedSeat,selectedTable,onSelectTable,dispatch,isExpanded,isHighlighted,isMultiSelected,highlightedGuest,isMobile,activeTouchMove,onStartTouchMove,onTableClick,onStartDrag,onStartResize,onPopupEnter,onPopupLeave }) {
   const{id,name,type,seats,x,y,groupId,rotation=0}=table;
   const isNoSeat=isNoSeatType(type);
   const isDecor=isDecorType(type);
@@ -1612,11 +1625,11 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
   const highlightBg=isSelected?(tgc?tgc.bg:"#faf5ff"):isHighlighted?(tgc?tgc.bg:"#f0f9ff"):tgc?tgc.bg:"#fff";
   const hlShadowOpacity=isSelected?.15:isHighlighted?.12:.06;
 
-  // Toolbar: centred horizontally over the element centre
-  const TOOLBAR_H=28;
-  const TOOLBAR_Y=y-PAD-TOOLBAR_H-6;
-  // Centre the toolbar on the element's visual centre
-  const ELEM_CX=isRound?TW/2:TW/2; // always TW/2 from x
+  // Toolbar: always fixed distance above the visual element top
+  // Visual top = y (not y-PAD — PAD is transparent SVG padding)
+  const TOOLBAR_H=isMobile?44:32;
+  const TOOLBAR_Y=y-TOOLBAR_H-8; // fixed 8px gap above element top edge
+  const ELEM_CX=TW/2; // visual centre
 
   return (
     <>
@@ -1655,6 +1668,28 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
             <span>{Math.round(rotation||0)}°</span>
           </div>
           <div style={{ width:1,height:14,background:"#333" }}/>
+          {/* Move button (mobile only) */}
+          {isMobile&&(
+            <>
+              <div
+                onTouchStart={e=>{e.stopPropagation();e.preventDefault();onStartTouchMove&&onStartTouchMove();}}
+                onMouseDown={e=>e.stopPropagation()}
+                style={{ display:"flex",alignItems:"center",gap:4,
+                  padding:isMobile?"6px 12px":"2px 8px",
+                  borderRadius:6,cursor:"pointer",
+                  color:activeTouchMove===id?"#fbbf24":"#ddd",
+                  fontSize:isMobile?14:11,fontWeight:500,
+                  fontFamily:"'DM Sans',sans-serif",
+                  userSelect:"none",WebkitUserSelect:"none",
+                  minWidth:isMobile?60:0,
+                  background:activeTouchMove===id?"rgba(251,191,36,.15)":"transparent",
+                }}>
+                <span style={{ fontSize:isMobile?18:13 }}>✥</span>
+                <span>{activeTouchMove===id?"Active":"Move"}</span>
+              </div>
+              <div style={{ width:1,height:14,background:"#333" }}/>
+            </>
+          )}
           {/* Resize: drag (mouse + touch) */}
           <div
             onMouseDown={onStartResize}
@@ -1676,9 +1711,8 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
       )}
 
       {/* ── MAIN TABLE ── */}
-      <div
-        style={{ position:"absolute",left:x-PAD,top:y-PAD,width:svgW,height:svgH,userSelect:"none",transform:`rotate(${rotation||0}deg)`,transformOrigin:`${PAD+TW/2}px ${PAD+TH/2}px`,pointerEvents:"none" }}>
-        <svg width={svgW} height={svgH} data-tableid={id} style={{ overflow:"visible",pointerEvents:"all" }} onMouseDown={onStartDrag}>
+      <div style={{ position:"absolute",left:x-PAD,top:y-PAD,width:svgW,height:svgH,userSelect:"none",transform:`rotate(${rotation||0}deg)`,transformOrigin:`${PAD+TW/2}px ${PAD+TH/2}px`,pointerEvents:"none" }}>
+        <svg width={svgW} height={svgH} data-tableid={id} style={{ overflow:"visible",pointerEvents:"none" }}>
           <defs>
             <filter id={`sh${id}`} x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="2" stdDeviation="5" floodColor="#000" floodOpacity={hlShadowOpacity}/>
@@ -1688,21 +1722,23 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
           {/* Table body */}
           {isDecor?(
             <rect x={ox} y={oy} width={TW} height={TH} rx={12} fill={decorBg[type]||"#333"} stroke={isSelected?"#7c3aed":"none"} strokeWidth={isSelected?2:0}
-              onClick={e=>{e.stopPropagation();onSelectTable(id);}} style={{ cursor:"grab" }}/>
+              onMouseDown={e=>{e.stopPropagation();onStartDrag(e);}} onClick={e=>{e.stopPropagation();onSelectTable(id);}} style={{ cursor:"grab",pointerEvents:"all" }}/>
           ):isRound?(
             <circle cx={ox+TW/2} cy={oy+TH/2} r={TW/2}
               fill={highlightBg} stroke={highlightBorder}
               strokeWidth={isSelected?2.5:isHighlighted?2:tgc?2:1.5}
               filter={`url(#sh${id})`}
+              onMouseDown={e=>{e.stopPropagation();onStartDrag(e);}}
               onClick={e=>{e.stopPropagation();onSelectTable(id);onTableClick();}}
-              style={{ cursor:"grab" }}/>
+              style={{ cursor:"grab",pointerEvents:"all" }}/>
           ):(
             <rect x={ox} y={oy} width={TW} height={TH} rx={isBanquet?6:10}
               fill={highlightBg} stroke={highlightBorder}
               strokeWidth={isSelected?2.5:isHighlighted?2:tgc?2:1.5}
               filter={`url(#sh${id})`}
+              onMouseDown={e=>{e.stopPropagation();onStartDrag(e);}}
               onClick={e=>{e.stopPropagation();onSelectTable(id);onTableClick();}}
-              style={{ cursor:"grab" }}/>
+              style={{ cursor:"grab",pointerEvents:"all" }}/>
           )}
 
           {/* Decor label */}
@@ -1740,24 +1776,25 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
             const pos=getSeatPos(i,seats);
             const initials=g?g.name.trim().split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase():"";
             const R=Math.max(9,Math.min(12,TW/10));
+            const isGuestHL=!!(highlightedGuest&&g&&g.id===highlightedGuest);
+            const circleFill=isGuestHL?"#dbeafe":isSel?"#fef08a":isHov?"#bfdbfe":g?(gc?.bg||"#f0fdf4"):"#f3f3f3";
+            const circleStroke=isGuestHL?"#2563eb":isSel?"#eab308":isHov?"#3b82f6":g?(gc?.dot||"#16a34a"):"#d0d0d0";
+            const circleStrokeW=isGuestHL?3:isSel?2.5:isHov?2.5:g?2:1.5;
+            const circleR=isGuestHL?R+2:R;
             return (
               <g key={i}
+                style={{ pointerEvents:"all", cursor:dragGuest||selectedSeat?"copy":g?"pointer":"default" }}
                 onMouseDown={e=>e.stopPropagation()}
                 onMouseEnter={()=>(dragGuest||selectedSeat)&&setHoveredSeat(sk)}
                 onMouseLeave={()=>setHoveredSeat(null)}
                 onMouseUp={e=>{e.stopPropagation();if(dragGuest)handleSeatDrop(sk);}}
                 onDragOver={e=>{e.preventDefault();setHoveredSeat(sk);}}
                 onDrop={e=>{e.stopPropagation();handleSeatDrop(sk);}}
-                onClick={e=>{e.stopPropagation();handleSeatClick(sk);}}
-                style={{ cursor:dragGuest||selectedSeat?"copy":g?"pointer":"default" }}>
-                {(()=>{
-                  const isGuestHL=highlightedGuest&&g&&g.id===highlightedGuest;
-                  return <circle cx={ox+pos.cx} cy={oy+pos.cy} r={isGuestHL?R+2:R}
-                    fill={isGuestHL?"#dbeafe":isSel?"#fef08a":isHov?"#bfdbfe":g?(gc?.bg||"#f0fdf4"):"#f3f3f3"}
-                    stroke={isGuestHL?"#2563eb":isSel?"#eab308":isHov?"#3b82f6":g?(gc?.dot||"#16a34a"):"#d0d0d0"}
-                    strokeWidth={isGuestHL?3:isSel?2.5:isHov?2.5:g?2:1.5}
-                    style={{ transition:"all .15s" }}/>;
-                })()}
+                onClick={e=>{e.stopPropagation();handleSeatClick(sk);}}>
+                <circle cx={ox+pos.cx} cy={oy+pos.cy} r={circleR}
+                  fill={circleFill} stroke={circleStroke}
+                  strokeWidth={circleStrokeW}
+                  style={{ transition:"all .15s" }}/>
                 {initials&&(
                   <text x={ox+pos.cx} y={oy+pos.cy+3} textAnchor="middle" dominantBaseline="middle"
                     fontSize={R>10?7:6} fontWeight="800"
@@ -1772,7 +1809,7 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
 
       {/* ── EXPANDED GUEST LIST ── */}
       {isExpanded&&(
-        <div style={{ position:"absolute",left:x+TW/2,top:y+TH+PAD+8,transform:"translateX(-50%)",minWidth:Math.max(TW,160),maxWidth:220,background:"#fff",border:"1px solid #e0e0e0",borderRadius:12,padding:"8px 9px",boxShadow:"0 8px 24px rgba(0,0,0,.11)",zIndex:60,maxHeight:200,overflowY:"auto",touchAction:"pan-y" }}
+        <div style={{ position:"absolute",left:x+TW/2,top:y+TH+12,transform:"translateX(-50%)",minWidth:Math.max(TW,160),maxWidth:220,background:"#fff",border:"1px solid #e0e0e0",borderRadius:12,padding:"8px 9px",boxShadow:"0 8px 24px rgba(0,0,0,.11)",zIndex:60,maxHeight:200,overflowY:"auto",touchAction:"pan-y" }}
           onMouseDown={e=>e.stopPropagation()}
           onTouchStart={e=>{e.stopPropagation();onPopupEnter&&onPopupEnter();}}
           onTouchEnd={e=>{e.stopPropagation();}}

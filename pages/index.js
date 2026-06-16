@@ -2491,23 +2491,22 @@ const LEGAL_CONTENT = {
     de: `<h2>Impressum</h2>
 <p><strong>Angaben gemäß § 5 TMG</strong></p>
 <p>SeatFlow<br/>
-Musterstraße 1<br/>
-12345 Musterstadt<br/>
+Arnoldstr. 58<br/>
+Bochum<br/>
 Deutschland</p>
 <p><strong>Kontakt</strong><br/>
-E-Mail: kontakt@seatflow.app</p>
+E-Mail: mail@seatflow.de</p>
 <p><strong>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</strong><br/>
-SeatFlow, Musterstraße 1, 12345 Musterstadt</p>
+SeatFlow, Arnoldstr. 58, Bochum</p>
 <p style="color:#aaa;font-size:12px;margin-top:16px">Bitte ersetze diese Angaben durch deine tatsächlichen Kontaktdaten.</p>`,
     en: `<h2>Imprint</h2>
 <p><strong>Information according to § 5 TMG</strong></p>
 <p>SeatFlow<br/>
-Sample Street 1<br/>
-12345 Sample City<br/>
+Arnoldstr. 58<br/>
+Bochum<br/>
 Germany</p>
 <p><strong>Contact</strong><br/>
-Email: contact@seatflow.app</p>
-<p style="color:#aaa;font-size:12px;margin-top:16px">Please replace this with your actual contact details.</p>`,
+Email: mail@seatflow.de</p>`,
   },
 
   // ── DATENSCHUTZERKLÄRUNG / PRIVACY POLICY ────────────────────
@@ -2523,8 +2522,7 @@ SeatFlow verwendet keine Tracking-Cookies. Es werden lediglich funktionale Brows
 <p><strong>4. Ihre Rechte</strong><br/>
 Sie können gespeicherte Daten jederzeit durch Löschen des Browser-Caches entfernen.</p>
 <p><strong>5. Kontakt</strong><br/>
-Bei Fragen: kontakt@seatflow.app</p>
-<p style="color:#aaa;font-size:12px;margin-top:16px">Bitte durch einen Anwalt auf deine konkrete Situation anpassen.</p>`,
+Bei Fragen: mail@seatflow.de</p>`,
     en: `<h2>Privacy Policy</h2>
 <p><strong>1. General</strong><br/>
 SeatFlow stores all data locally in your browser (localStorage). No data is transmitted to external servers.</p>
@@ -2535,8 +2533,7 @@ SeatFlow does not use tracking cookies. Only functional browser storage is used.
 <p><strong>4. Your Rights</strong><br/>
 You can remove all stored data by clearing your browser cache.</p>
 <p><strong>5. Contact</strong><br/>
-Questions: contact@seatflow.app</p>
-<p style="color:#aaa;font-size:12px;margin-top:16px">Please adapt this with the help of a lawyer for your situation.</p>`,
+Questions: mail@seatflow.de</p>`,
   },
 
   // ── AGB / TERMS OF SERVICE ────────────────────────────────────
@@ -2548,16 +2545,14 @@ Diese AGB gelten für die kostenlose Nutzung von SeatFlow.</p>
 <p><strong>§ 2 Leistungsbeschreibung</strong><br/>
 SeatFlow ist ein kostenloser, browserbasierter Sitzplaner. Die Nutzung erfolgt ohne Registrierung.</p>
 <p><strong>§ 3 Haftungsausschluss</strong><br/>
-SeatFlow wird ohne Gewähr bereitgestellt. Für Datenverluste durch Browser-Cache-Löschung wird keine Haftung übernommen.</p>
-<p style="color:#aaa;font-size:12px;margin-top:16px">Bitte durch einen Anwalt prüfen lassen.</p>`,
+SeatFlow wird ohne Gewähr bereitgestellt. Für Datenverluste durch Browser-Cache-Löschung wird keine Haftung übernommen.</p>`,
     en: `<h2>Terms of Service</h2>
 <p><strong>1. Scope</strong><br/>
 These terms apply to the free use of SeatFlow.</p>
 <p><strong>2. Service Description</strong><br/>
 SeatFlow is a free, browser-based seating planner. No registration required.</p>
 <p><strong>3. Disclaimer</strong><br/>
-SeatFlow is provided as-is. No liability for data loss due to browser cache clearing.</p>
-<p style="color:#aaa;font-size:12px;margin-top:16px">Please have this reviewed by a lawyer.</p>`,
+SeatFlow is provided as-is. No liability for data loss due to browser cache clearing.</p>`,
   },
 
   // ── COOKIE-RICHTLINIE / COOKIE POLICY ─────────────────────────
@@ -2565,11 +2560,11 @@ SeatFlow is provided as-is. No liability for data loss due to browser cache clea
   cookiePolicy: {
     de: `<h2>Cookie-Richtlinie</h2>
 <p>SeatFlow verwendet keine Tracking- oder Analyse-Cookies.</p>
-<p>Es wird ausschließlich der <strong>localStorage</strong> des Browsers verwendet, um dein Projekt lokal zu speichern. Dieser wird nicht für Werbung oder Tracking genutzt.</p>
+<p>Es wird ausschließlich der <strong>localStorage</strong> des Browsers verwendet, um dein Projekt lokal zu speichern.</p>
 <p>Du kannst die gespeicherten Daten jederzeit in den Browsereinstellungen löschen.</p>`,
     en: `<h2>Cookie Policy</h2>
 <p>SeatFlow does not use tracking or analytics cookies.</p>
-<p>Only the browser's <strong>localStorage</strong> is used to save your project locally. It is not used for advertising or tracking.</p>
+<p>Only the browser's <strong>localStorage</strong> is used to save your project locally.</p>
 <p>You can delete stored data anytime in your browser settings.</p>`,
   },
 };

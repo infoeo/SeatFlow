@@ -1328,11 +1328,13 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
     if(e.touches.length===1){
       const t=e.touches[0];
       lastPinchDist.current=null;
-      // If toolbar "Move" button is active for a table, handle drag
+      // If a drag was already started by the Move button, just continue
+      if(touchDragTable.current) return;
+      // If move mode is active but no drag started yet, init drag now
       if(touchMoveMode.current){
-        const r=containerRef.current.getBoundingClientRect();
+        const r=containerRef.current?.getBoundingClientRect();
         const tb=tables.find(t2=>t2.id===touchMoveMode.current);
-        if(tb){
+        if(r&&tb){
           touchDragTable.current={
             id:touchMoveMode.current,
             origX:tb.x, origY:tb.y,
@@ -1342,7 +1344,7 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
         }
         return;
       }
-      // Normal: start pan (canvas moves with finger)
+      // Normal canvas pan
       setPanning(true);
       setPanStart({x:t.clientX-pan.x, y:t.clientY-pan.y});
     } else if(e.touches.length===2){
@@ -1392,22 +1394,33 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
     if(touchDragTable.current){
       dispatch({type:"UPDATE_TABLE_HISTORY",id:touchDragTable.current.id,payload:{}});
       touchDragTable.current=null;
-      // Keep move mode active so user can drag again
+      // Clear move mode so next touch pans canvas normally
+      touchMoveMode.current=null;
+      setActiveTouchMove(null);
     }
     setPanning(false);
     setPanStart(null);
     lastPinchDist.current=null;
   }
-  // Called from toolbar "Move" button
-  function startTouchMove(tableId){
-    if(touchMoveMode.current===tableId){
-      // Toggle off
-      touchMoveMode.current=null;
-      setActiveTouchMove(null);
-    } else {
-      touchMoveMode.current=tableId;
-      setActiveTouchMove(tableId);
-      if(navigator.vibrate) navigator.vibrate(20);
+  // Called from toolbar "Move" button with the initial touch point
+  // Immediately starts dragging the table — no second tap needed
+  function startTouchMove(tableId, initialTouch){
+    const tb=tables.find(t=>t.id===tableId);
+    if(!tb) return;
+    touchMoveMode.current=tableId;
+    setActiveTouchMove(tableId);
+    if(navigator.vibrate) navigator.vibrate(20);
+    if(initialTouch){
+      const r=containerRef.current?.getBoundingClientRect();
+      if(r){
+        const cx=(initialTouch.clientX-r.left-pan.x)/zoom;
+        const cy2=(initialTouch.clientY-r.top-pan.y)/zoom;
+        touchDragTable.current={
+          id:tableId,
+          origX:tb.x, origY:tb.y,
+          startCX:cx, startCY:cy2,
+        };
+      }
     }
   }
 
@@ -1507,7 +1520,7 @@ function FloorCanvas({ tables,guests,groups,assignments,dispatch,dragGuest,setDr
             onTableClick={()=>handleTableClick(table.id)}
             isMobile={isMobile}
             activeTouchMove={activeTouchMove}
-            onStartTouchMove={()=>startTouchMove(table.id)}
+            onStartTouchMove={(touch)=>startTouchMove(table.id,touch)}
             onStartDrag={e=>startTableDrag(e,table.id)}
             onStartResize={e=>startResize(e,table.id)}
             onPopupEnter={()=>{overPopupRef.current=true;}}
@@ -1625,11 +1638,31 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
   const highlightBg=isSelected?(tgc?tgc.bg:"#faf5ff"):isHighlighted?(tgc?tgc.bg:"#f0f9ff"):tgc?tgc.bg:"#fff";
   const hlShadowOpacity=isSelected?.15:isHighlighted?.12:.06;
 
-  // Toolbar: always fixed distance above the visual element top
-  // Visual top = y (not y-PAD — PAD is transparent SVG padding)
-  const TOOLBAR_H=isMobile?44:32;
-  const TOOLBAR_Y=y-TOOLBAR_H-8; // fixed 8px gap above element top edge
-  const ELEM_CX=TW/2; // visual centre
+  // ── TOOLBAR & POPUP POSITIONING ──────────────────────────────
+  // All positions are in canvas coordinates (not SVG-local).
+  // The visual element occupies:
+  //   top:    y
+  //   bottom: y + TH  (for rect/banquet)
+  //   For round: seat circles extend beyond TH to y + TH/2 + outerSeatR
+  //
+  // We compute the exact visual extents so toolbar and popup
+  // always have a FIXED 8px gap regardless of element size.
+  const TOOLBAR_H = isMobile ? 44 : 32;
+  const GAP = 8; // fixed gap in canvas px
+  const ELEM_CX = TW / 2; // visual centre x
+
+  // Visual top edge (toolbar goes above this)
+  const visualTop = y; // shape top edge in canvas coords
+  const TOOLBAR_Y = visualTop - TOOLBAR_H - GAP;
+
+  // Visual bottom edge (popup goes below this)
+  // For round/cocktail: seat circles at radius (TW/2 + 18), dot radius 12
+  // For rect/banquet:   seats at y+TH+16, dot radius 12
+  const seatOuterR = isRound ? (TW/2 + 18 + 12) : 28;
+  const visualBottom = isRound
+    ? (y + TH/2 + seatOuterR)   // centre + outer seat radius
+    : (y + TH + seatOuterR);    // bottom + seat drop + dot
+  const POPUP_Y = visualBottom + GAP;
 
   return (
     <>
@@ -1668,24 +1701,31 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
             <span>{Math.round(rotation||0)}°</span>
           </div>
           <div style={{ width:1,height:14,background:"#333" }}/>
-          {/* Move button (mobile only) */}
+          {/* Move button (mobile only) — hold & drag to reposition element */}
           {isMobile&&(
             <>
               <div
-                onTouchStart={e=>{e.stopPropagation();e.preventDefault();onStartTouchMove&&onStartTouchMove();}}
+                onTouchStart={e=>{
+                  e.stopPropagation();
+                  e.preventDefault();
+                  // Immediately start a drag from this touch point
+                  onStartTouchMove&&onStartTouchMove(e.touches[0]);
+                }}
                 onMouseDown={e=>e.stopPropagation()}
                 style={{ display:"flex",alignItems:"center",gap:4,
-                  padding:isMobile?"6px 12px":"2px 8px",
-                  borderRadius:6,cursor:"pointer",
+                  padding:"6px 12px",
+                  borderRadius:6,
+                  cursor:"grab",
                   color:activeTouchMove===id?"#fbbf24":"#ddd",
-                  fontSize:isMobile?14:11,fontWeight:500,
+                  fontSize:14,fontWeight:600,
                   fontFamily:"'DM Sans',sans-serif",
                   userSelect:"none",WebkitUserSelect:"none",
-                  minWidth:isMobile?60:0,
-                  background:activeTouchMove===id?"rgba(251,191,36,.15)":"transparent",
+                  minWidth:64,
+                  background:activeTouchMove===id?"rgba(251,191,36,.18)":"transparent",
+                  touchAction:"none",
                 }}>
-                <span style={{ fontSize:isMobile?18:13 }}>✥</span>
-                <span>{activeTouchMove===id?"Active":"Move"}</span>
+                <span style={{ fontSize:18 }}>✥</span>
+                <span style={{ fontSize:12 }}>{activeTouchMove===id?"…":"Move"}</span>
               </div>
               <div style={{ width:1,height:14,background:"#333" }}/>
             </>
@@ -1809,7 +1849,7 @@ function TableElement({ table,assignments,guests,groups,getGC,getGuestAtSeat,dra
 
       {/* ── EXPANDED GUEST LIST ── */}
       {isExpanded&&(
-        <div style={{ position:"absolute",left:x+TW/2,top:y+TH+12,transform:"translateX(-50%)",minWidth:Math.max(TW,160),maxWidth:220,background:"#fff",border:"1px solid #e0e0e0",borderRadius:12,padding:"8px 9px",boxShadow:"0 8px 24px rgba(0,0,0,.11)",zIndex:60,maxHeight:200,overflowY:"auto",touchAction:"pan-y" }}
+        <div style={{ position:"absolute",left:x+TW/2,top:POPUP_Y,transform:"translateX(-50%)",minWidth:Math.max(TW,160),maxWidth:220,background:"#fff",border:"1px solid #e0e0e0",borderRadius:12,padding:"8px 9px",boxShadow:"0 8px 24px rgba(0,0,0,.11)",zIndex:60,maxHeight:200,overflowY:"auto",touchAction:"pan-y" }}
           onMouseDown={e=>e.stopPropagation()}
           onTouchStart={e=>{e.stopPropagation();onPopupEnter&&onPopupEnter();}}
           onTouchEnd={e=>{e.stopPropagation();}}
@@ -2435,7 +2475,18 @@ function AutoCreateModal({ t, lang, dispatch, onClose }) {
 }
 
 // ─── LEGAL MODAL ───────────────────────────────────────────────────────────
+//
+// ╔═══════════════════════════════════════════════════════════════════════╗
+// ║  HIER RECHTSTEXTE ANPASSEN / EDIT LEGAL TEXT HERE                       ║
+// ║  Ersetze die Platzhalter (Adresse, E-Mail, etc.) durch deine echten     ║
+// ║  Angaben. Jeder Text existiert in DE und EN — beide Sprachen anpassen.  ║
+// ║  HTML-Tags wie <p>, <strong>, <br/> bleiben einfach erhalten.           ║
+// ╚═══════════════════════════════════════════════════════════════════════╝
+//
 const LEGAL_CONTENT = {
+
+  // ── IMPRESSUM / IMPRINT ──────────────────────────────────────
+  // Hier: Firmenname, Adresse, E-Mail-Kontakt anpassen.
   impressum: {
     de: `<h2>Impressum</h2>
 <p><strong>Angaben gemäß § 5 TMG</strong></p>
@@ -2458,6 +2509,9 @@ Germany</p>
 Email: contact@seatflow.app</p>
 <p style="color:#aaa;font-size:12px;margin-top:16px">Please replace this with your actual contact details.</p>`,
   },
+
+  // ── DATENSCHUTZERKLÄRUNG / PRIVACY POLICY ────────────────────
+  // Hier: Datenschutz-Kontakt-E-Mail anpassen, ggf. mit Anwalt abstimmen.
   datenschutz: {
     de: `<h2>Datenschutzerklärung</h2>
 <p><strong>1. Allgemeine Hinweise</strong><br/>
@@ -2484,6 +2538,9 @@ You can remove all stored data by clearing your browser cache.</p>
 Questions: contact@seatflow.app</p>
 <p style="color:#aaa;font-size:12px;margin-top:16px">Please adapt this with the help of a lawyer for your situation.</p>`,
   },
+
+  // ── AGB / TERMS OF SERVICE ────────────────────────────────────
+  // Hier: Nutzungsbedingungen anpassen, ggf. mit Anwalt abstimmen.
   agb: {
     de: `<h2>Allgemeine Geschäftsbedingungen</h2>
 <p><strong>§ 1 Geltungsbereich</strong><br/>
@@ -2502,6 +2559,9 @@ SeatFlow is a free, browser-based seating planner. No registration required.</p>
 SeatFlow is provided as-is. No liability for data loss due to browser cache clearing.</p>
 <p style="color:#aaa;font-size:12px;margin-top:16px">Please have this reviewed by a lawyer.</p>`,
   },
+
+  // ── COOKIE-RICHTLINIE / COOKIE POLICY ─────────────────────────
+  // Hier: nur anpassen falls du später Tracking/Ads-Cookies hinzufügst.
   cookiePolicy: {
     de: `<h2>Cookie-Richtlinie</h2>
 <p>SeatFlow verwendet keine Tracking- oder Analyse-Cookies.</p>
@@ -2513,6 +2573,7 @@ SeatFlow is provided as-is. No liability for data loss due to browser cache clea
 <p>You can delete stored data anytime in your browser settings.</p>`,
   },
 };
+// ─── END LEGAL CONTENT — zum Bearbeiten einfach Text zwischen den `` ändern ───
 
 function LegalModal({ type, lang, t, onClose }) {
   const content=LEGAL_CONTENT[type]?.[lang]||LEGAL_CONTENT[type]?.de||"";

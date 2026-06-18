@@ -1958,6 +1958,31 @@ function ConfirmModal({ title,desc,confirm,cancel,onConfirm,onClose }) {
 }
 
 // ─── EXPORT MODAL ──────────────────────────────────────────────────────────
+function AdSenseSlot() {
+  const pushed = useRef(false);
+
+  useEffect(() => {
+    if (pushed.current) return;
+    pushed.current = true;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.warn("AdSense push failed:", e);
+    }
+  }, []);
+
+  return (
+    <ins
+      className="adsbygoogle"
+      style={{ display: "block" }}
+      data-ad-format="fluid"
+      data-ad-layout-key="-6r+eg+1y-2g-17"
+      data-ad-client="ca-pub-1417352426142043"
+      data-ad-slot="2381425798"
+    />
+  );
+}
+
 function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
   const [phase,setPhase]=useState("gate");
   const [count,setCount]=useState(15);
@@ -2282,7 +2307,7 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
           {/* ADSENSE CODE SNIPPET */}
 
           <div suppressHydrationWarning>
-            <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+            <AdSenseSlot />
           </div>
           {/* ENDE */}
             
@@ -2302,7 +2327,7 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
 
           {/* ADSENSE CODE SNIPPET */}
           <div suppressHydrationWarning>
-            <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+           <AdSenseSlot />
           </div>
           {/* ENDE */}
           

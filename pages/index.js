@@ -555,6 +555,7 @@ function LandingPage({ dispatch, t, lang }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"/>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='28' fill='white'>SF</text></svg>"/>
         <link rel="stylesheet" href={FONT_URL}/>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
       </Head>
       <style>{`*{box-sizing:border-box;}.bp{background:#111;color:#fff;border:none;padding:11px 26px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}.bp:hover{background:#333;transform:translateY(-1px);}.bo{background:transparent;color:#111;border:1.5px solid #ddd;padding:10px 22px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}.bo:hover{border-color:#999;background:#f5f5f5;}`}</style>
       <nav style={{ padding:"14px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #eee",background:"#fff",position:"sticky",top:0,zIndex:50 }}>
@@ -619,6 +620,7 @@ function SetupPage({ dispatch, t, lang }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"/>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='28' fill='white'>SF</text></svg>"/>
         <link rel="stylesheet" href={FONT_URL}/>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
       </Head>
       <nav style={{ padding:"14px 26px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #eee",background:"#fff" }}>
         <div style={{ display:"flex",alignItems:"center",gap:10 }}>
@@ -816,7 +818,7 @@ function AppPage({ state, dispatch, t }) {
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",height:"100svh",overflow:"hidden",background:"#e8e8e8" }}>
-      <Head><link rel="stylesheet" href={FONT_URL}/></Head>
+      <Head><link rel="stylesheet" href={FONT_URL}/><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script></Head>
       <style>{`
         *{box-sizing:border-box;}
         input,select,textarea{font-family:'DM Sans',sans-serif;}

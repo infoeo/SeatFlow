@@ -2281,8 +2281,9 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
 
           {/* ADSENSE CODE SNIPPET */}
 
-           <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
-
+          <div suppressHydrationWarning>
+            <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+          </div>
           {/* ENDE */}
             
           </div>
@@ -2300,9 +2301,9 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
             <div style={{ fontSize:10,color:"#ccc" }}>Advertisement</div>
 
           {/* ADSENSE CODE SNIPPET */}
-          
+          <div suppressHydrationWarning>
             <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
-
+          </div>
           {/* ENDE */}
           
             <div style={{ position:"absolute",top:8,right:8,background:"#111",color:"#fff",borderRadius:999,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12 }}>{count}</div>

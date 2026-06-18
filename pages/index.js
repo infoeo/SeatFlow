@@ -2279,11 +2279,11 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
             <p style={{ color:"#bbb",fontSize:10,fontWeight:600 }}>— AD PLACEHOLDER —</p>
             <p style={{ color:"#ccc",fontSize:9,marginTop:2 }}>Google AdSense / Rewarded Video</p>
 
-            //Adsense Code Snippet 2
+            //ADSENSE CODE SNIPPET
 
-            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
-              <ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
-            <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+           <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+
+            // ENDE
             
           </div>
           {fmt==="seatflow"
@@ -2301,9 +2301,9 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
 
           // ADSENSE CODE SNIPPET
           
-            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
-              <ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
-  	        <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+            <ins className="adsbygoogle" style={{display:"block"}} data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+
+          // ENDE
           
             <div style={{ position:"absolute",top:8,right:8,background:"#111",color:"#fff",borderRadius:999,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12 }}>{count}</div>
           </div>

@@ -2278,6 +2278,13 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
           <div style={{ background:"#f8f8f8",border:"2px dashed #e0e0e0",borderRadius:11,padding:"20px 12px",marginBottom:14 }}>
             <p style={{ color:"#bbb",fontSize:10,fontWeight:600 }}>— AD PLACEHOLDER —</p>
             <p style={{ color:"#ccc",fontSize:9,marginTop:2 }}>Google AdSense / Rewarded Video</p>
+
+            //Adsense Code Snippet 2
+
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
+              <ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+            <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+            
           </div>
           {fmt==="seatflow"
             ?<button onClick={doExport} style={{ width:"100%",background:"#111",color:"#fff",border:"none",padding:"10px",borderRadius:9,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif" }}>Download .seatflow</button>

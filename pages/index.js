@@ -2291,6 +2291,13 @@ function ExportModal({ onClose,state,canvasWrapRef,t,bgStyle }) {
           <h3 style={{ fontFamily:"'Playfair Display',serif",fontSize:19,fontWeight:700,marginBottom:6 }}>{t.preparingExport}</h3>
           <div style={{ background:"#f5f5f5",border:"1px solid #eee",borderRadius:11,padding:"26px 12px",marginBottom:14,position:"relative" }}>
             <div style={{ fontSize:10,color:"#ccc" }}>Advertisement</div>
+
+          // ADSENSE CODE SNIPPET
+          
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
+              <ins class="adsbygoogle" style="display:block" data-ad-format="fluid" data-ad-layout-key="-6r+eg+1y-2g-17" data-ad-client="ca-pub-1417352426142043" data-ad-slot="2381425798"></ins>
+  	        <script> (adsbygoogle = window.adsbygoogle || []).push({}); </script>
+          
             <div style={{ position:"absolute",top:8,right:8,background:"#111",color:"#fff",borderRadius:999,width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12 }}>{count}</div>
           </div>
           <div style={{ height:3,background:"#f0f0f0",borderRadius:999,overflow:"hidden",marginBottom:5 }}>

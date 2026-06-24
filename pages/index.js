@@ -159,7 +159,7 @@ const isNoSeatType  = t => NO_SEAT_TYPES.includes(t);
 
 const TEMPLATES = [
   { id:"wedding-50", name:"Wedding · 50", icon:"💍", guests:50, tables:[
-    {id:"t1",name:"Head Table",type:"rect",  seats:8, x:280,y:50,  rotation:0,w:null,h:null,groupId:null},
+    {id:"t1",name:" Table",type:"rect",  seats:8, x:280,y:50,  rotation:0,w:null,h:null,groupId:null},
     {id:"t2",name:"Table 1",  type:"round", seats:8, x:80, y:200, rotation:0,w:null,h:null,groupId:null},
     {id:"t3",name:"Table 2",  type:"round", seats:8, x:270,y:200, rotation:0,w:null,h:null,groupId:null},
     {id:"t4",name:"Table 3",  type:"round", seats:8, x:460,y:200, rotation:0,w:null,h:null,groupId:null},
@@ -553,6 +553,7 @@ function LandingPage({ dispatch, t, lang }) {
         <meta property="og:type" content="website"/>
         <meta name="twitter:card" content="summary_large_image"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"/>
+        <meta name="google-adsense-account" content="ca-pub-1417352426142043">
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='28' fill='white'>SF</text></svg>"/>
         <link rel="stylesheet" href={FONT_URL}/>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
@@ -618,6 +619,7 @@ function SetupPage({ dispatch, t, lang }) {
       <Head>
         <title>{event.name?`${event.name} – SeatFlow`:"SeatFlow – Sitzplan"}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5"/>
+        <meta name="google-adsense-account" content="ca-pub-1417352426142043">
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='28' fill='white'>SF</text></svg>"/>
         <link rel="stylesheet" href={FONT_URL}/>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
@@ -818,7 +820,9 @@ function AppPage({ state, dispatch, t }) {
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",height:"100svh",overflow:"hidden",background:"#e8e8e8" }}>
-      <Head><link rel="stylesheet" href={FONT_URL}/><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script></Head>
+      <Head><link rel="stylesheet" href={FONT_URL}/><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1417352426142043" crossorigin="anonymous"></script>
+      <meta name="google-adsense-account" content="ca-pub-1417352426142043">  
+      </Head>
       <style>{`
         *{box-sizing:border-box;}
         input,select,textarea{font-family:'DM Sans',sans-serif;}
